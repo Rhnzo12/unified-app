@@ -1,0 +1,156 @@
+
+
+body {
+  background: linear-gradient(135deg, #23272f 0%, #181a20 100%);
+  font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  color: #f8f8f8;
+}
+
+.App {
+  text-align: center;
+}
+
+.quantom-bloom-card {
+  background: #23272f;
+  border-radius: 24px;
+  box-shadow: 0 2px 16px 0 #ffe06633;
+  padding: 32px 24px;
+  margin: 24px auto;
+  max-width: 480px;
+  border: 2px solid #ffe066;
+}
+
+.quantom-bloom-btn {
+  background: linear-gradient(90deg, #ffe066 60%, #b6e880 100%);
+  color: #222;
+  font-weight: bold;
+
+  body {
+    background: linear-gradient(135deg, #fffbe7 0%, #fffde4 100%);
+    font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  .App {
+    text-align: center;
+  }
+
+  .quantom-bloom-card {
+    background: #fffbe7;
+    border-radius: 24px;
+    box-shadow: 0 2px 16px 0 #ffe06644;
+    padding: 32px 24px;
+    margin: 24px auto;
+    max-width: 480px;
+    border: 2px solid #ffe066;
+  }
+
+  .quantom-bloom-btn {
+    background: linear-gradient(90deg, #ffe066 60%, #b6e880 100%);
+    color: #181a20;
+    font-weight: bold;
+    border: none;
+    border-radius: 999px;
+    padding: 14px 32px;
+    font-size: 1.1rem;
+    margin: 8px 0;
+    cursor: pointer;
+    box-shadow: 0 2px 8px #ffe06633;
+    transition: transform 0.1s;
+  }
+  .quantom-bloom-btn:hover {
+    transform: scale(1.05) rotate(-2deg);
+    background: linear-gradient(90deg, #ffe066 40%, #b6e880 100%);
+    color: #23272f;
+  }
+
+  .quantom-bloom-header {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #ffe066;
+    text-shadow: 1px 2px 0 #b6e880, 0 4px 12px #181a20;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+  }
+
+  .quantom-bloom-sub {
+    color: #b6e880;
+    font-size: 1.1rem;
+    margin-bottom: 24px;
+  }
+
+  .quantom-bloom-badge {
+    display: inline-block;
+    background: #ffe066;
+    color: #23272f;
+    font-weight: bold;
+    border-radius: 999px;
+    padding: 4px 16px;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 4px #ffe06633;
+  }
+
+  .quantom-bloom-gallery-img {
+    border-radius: 18px;
+    border: 2px solid #ffe066;
+    box-shadow: 0 2px 8px #ffe06633;
+  }
+
+  .quantom-bloom-input {
+    border-radius: 12px;
+    border: 1.5px solid #ffe066;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    width: 100%;
+    font-size: 1rem;
+    background: #fff;
+    transition: border 0.2s;
+  }
+  .quantom-bloom-input:focus {
+    border: 2px solid #b6e880;
+    outline: none;
+  }
+
+  .quantom-bloom-label {
+    font-weight: 600;
+    color: #b6e880;
+    margin-bottom: 6px;
+    display: block;
+  }
+  box-shadow: 0 1px 4px #ffe06633;
+}
+
+.quantom-bloom-gallery-img {
+  border-radius: 18px;
+  border: 2px solid #ffe066;
+  box-shadow: 0 2px 8px #ffe06633;
+  background: #181a20;
+}
+
+.quantom-bloom-input {
+  border-radius: 12px;
+  border: 1.5px solid #ffe066;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  width: 100%;
+  font-size: 1rem;
+  background: #23272f;
+  color: #f8f8f8;
+  transition: border 0.2s;
+}
+.quantom-bloom-input:focus {
+  border: 2px solid #b6e880;
+  outline: none;
+  background: #181a20;
+}
+
+.quantom-bloom-label {
+  font-weight: 600;
+  color: #b6e880;
+  margin-bottom: 6px;
+  display: block;
+}
