@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { FaPaperPlane, FaImage, FaRegNewspaper, FaChartLine, FaSquare, FaRegPlayCircle, FaUserCircle, FaSignOutAlt, FaExpand, FaDownload } from "react-icons/fa";
 import { FaSpinner } from "react-icons/fa";
 
-export default function SocialMediaSquare({ onBackToDashboard, onNavigate, onSignOut }) {
+export default function SocialMediaSquare({ onBackToDashboard, onNavigate, onSignOut, onProfileClick }) {
   const handleProfileClick = () => window.location.href = '/';
   const handleSignOutLocal = () => {
     if (onSignOut) onSignOut();
@@ -121,44 +121,70 @@ export default function SocialMediaSquare({ onBackToDashboard, onNavigate, onSig
           </nav>
           <hr style={{ border: 'none', borderTop: '1.5px solid #ffe06633', margin: '24px 0 12px 16px', width: '80%', alignSelf: 'flex-start' }} />
         </div>
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ color: '#fff', fontSize: 13, fontWeight: 400, letterSpacing: 1, margin: '0 0 8px 32px', opacity: 0.7 }}>Settings</div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '0 16px' }}>
-            <button
-              onClick={handleProfileClick}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, borderRadius: 8, transition: 'background 0.2s, color 0.2s, transform 0.2s' }}
-              title="Profile"
-              onMouseOver={e => {
-                e.currentTarget.style.background = 'rgba(102,204,255,0.18)';
-                e.currentTarget.style.color = '#1e90ff';
-                e.currentTarget.style.transform = 'scale(1.12)';
-              }}
-              onMouseOut={e => {
-                e.currentTarget.style.background = 'none';
-                e.currentTarget.style.color = '';
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
-            >
-              <FaUserCircle size={32} color="#ffe066" />
-            </button>
-            <button
-              onClick={handleSignOutLocal}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ffe066', fontSize: 18, display: 'flex', alignItems: 'center', gap: 8, padding: '4px 8px', borderRadius: 8, transition: 'background 0.2s, color 0.2s, transform 0.2s' }}
-              onMouseOver={e => {
-                e.currentTarget.style.background = 'rgba(255,102,102,0.18)';
-                e.currentTarget.style.color = '#ff3b3b';
-                e.currentTarget.style.transform = 'scale(1.12)';
-              }}
-              onMouseOut={e => {
-                e.currentTarget.style.background = 'none';
-                e.currentTarget.style.color = '#ffe066';
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
-            >
-              <FaSignOutAlt size={22} /> Sign Out
-            </button>
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{ color: '#fff', fontSize: 13, fontWeight: 400, letterSpacing: 1, margin: '0 0 8px 32px', opacity: 0.7 }}>Settings</div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '0 16px' }}>
+              <button
+                onClick={() => {
+                  if (onProfileClick) {
+                    onProfileClick();
+                  } else {
+                    window.location.href = '/profile';
+                  }
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                  borderRadius: 8,
+                  transition: 'background 0.2s, color 0.2s, transform 0.2s',
+                }}
+                title="Profile"
+                onMouseOver={e => {
+                  e.currentTarget.style.background = 'rgba(102,204,255,0.18)';
+                  e.currentTarget.style.color = '#1e90ff';
+                  e.currentTarget.style.transform = 'scale(1.12)';
+                }}
+                onMouseOut={e => {
+                  e.currentTarget.style.background = 'none';
+                  e.currentTarget.style.color = '';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                <FaUserCircle size={32} color="#ffe066" />
+              </button>
+
+              <button
+                onClick={handleSignOutLocal}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#ffe066',
+                  fontSize: 18,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '4px 8px',
+                  borderRadius: 8,
+                  transition: 'background 0.2s, color 0.2s, transform 0.2s',
+                }}
+                onMouseOver={e => {
+                  e.currentTarget.style.background = 'rgba(255,102,102,0.18)';
+                  e.currentTarget.style.color = '#ff3b3b';
+                  e.currentTarget.style.transform = 'scale(1.12)';
+                }}
+                onMouseOut={e => {
+                  e.currentTarget.style.background = 'none';
+                  e.currentTarget.style.color = '#ffe066';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                <FaSignOutAlt size={22} /> Sign Out
+              </button>
+            </div>
           </div>
-        </div>
       </aside>
 
       {/* Main Content */}

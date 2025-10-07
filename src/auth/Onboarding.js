@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-// Import logo from public folder
-// No import needed, use <img src="/logo.png" />
+import React, { useState } from "react";
+import { signUp, signIn } from "../firebaseAuth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "../config";
 
 // Custom SVG Icons
 const MailIcon = () => (
@@ -24,30 +25,6 @@ const UserIcon = () => (
 const CalendarIcon = () => (
   <svg style={{ width: '20px', height: '20px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-  </svg>
-);
-
-const SparklesIcon = () => (
-  <svg style={{ width: '40px', height: '40px', color: 'white' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-  </svg>
-);
-
-const UserBigIcon = () => (
-  <svg style={{ width: '40px', height: '40px', color: 'white' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-  </svg>
-);
-
-const PlusIcon = () => (
-  <svg style={{ width: '24px', height: '24px', color: 'white' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-  </svg>
-);
-
-const UserSmallIcon = () => (
-  <svg style={{ width: '24px', height: '24px', color: '#c4b5fd' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
   </svg>
 );
 
@@ -150,18 +127,6 @@ const styles = {
     transition: 'transform 0.2s',
     cursor: 'pointer'
   },
-  welcomeIcon: {
-    width: '80px',
-    height: '80px',
-    background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
-    borderRadius: '16px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-    transition: 'transform 0.2s',
-    cursor: 'pointer'
-  },
   logoBadge: {
     position: 'absolute',
     top: '-4px',
@@ -208,7 +173,9 @@ const styles = {
     left: '16px',
     top: '50%',
     transform: 'translateY(-50%)',
-    color: '#d8b4fe'
+    color: '#d8b4fe',
+    zIndex: 1,
+    pointerEvents: 'none'
   },
   input: {
     width: '100%',
@@ -255,179 +222,133 @@ const styles = {
     textDecoration: 'underline',
     padding: 0
   },
-  actionCard: {
-    background: 'linear-gradient(90deg, #eab308 0%, #ca8a04 100%)',
-    padding: '24px',
-    borderRadius: '16px',
-    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-    transition: 'transform 0.2s',
-    cursor: 'pointer',
-    border: 'none',
-    width: '100%',
-    marginBottom: '16px'
-  },
-  actionCardSecondary: {
-    background: 'rgba(255, 255, 255, 0.1)',
-    backdropFilter: 'blur(4px)',
-    padding: '24px',
-    borderRadius: '16px',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-    transition: 'all 0.2s',
-    cursor: 'pointer',
-    width: '100%'
-  },
-  actionCardContent: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  },
-  actionCardLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px'
-  },
-  actionCardIcon: {
-    width: '48px',
-    height: '48px',
-    background: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: '12px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  actionCardIconSecondary: {
-    width: '48px',
-    height: '48px',
-    background: 'rgba(168, 85, 247, 0.3)',
-    borderRadius: '12px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  actionCardText: {
-    textAlign: 'left'
-  },
-  actionCardTitle: {
-    fontSize: '20px',
-    fontWeight: 'bold',
-    color: 'white',
-    margin: 0
-  },
-  actionCardSubtitle: {
+  errorMessage: {
+    color: '#ff6b6b',
+    background: 'rgba(255, 107, 107, 0.1)',
+    padding: '12px',
+    borderRadius: '8px',
+    marginBottom: '16px',
     fontSize: '14px',
-    color: '#fef3c7',
-    margin: '4px 0 0 0'
-  },
-  actionCardSubtitleSecondary: {
-    fontSize: '14px',
-    color: '#e9d5ff',
-    margin: '4px 0 0 0'
+    border: '1px solid rgba(255, 107, 107, 0.3)'
   }
 };
 
-// Removed duplicate export default function AuthFlow
-export default function Onboarding(props) {
-  const [hasProfile, setHasProfile] = useState(false);
-  const [step, setStep] = useState('signin');
-  const { onBack, onComplete } = props;
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [name, setName] = useState('');
-  const [birthday, setBirthday] = useState('');
+export default function Onboarding({ onAuth, onComplete, onBack }) {
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [profileData, setProfileData] = useState({ name: "", birthday: "" });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const validateEmail = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  // Function to check if user has a profile
+  const checkUserProfile = async (uid) => {
+    try {
+      const profileRef = doc(db, "users", uid, "profile", "main");
+      const profileSnap = await getDoc(profileRef);
+      return profileSnap.exists();
+    } catch (err) {
+      console.error("Error checking profile:", err);
+      return false;
+    }
   };
 
-  const handleSignIn = () => {
-    if (!email || !password) {
-      alert('Invalid Email or Password');
-      return;
+  // Function to save user basic info to Firestore
+  const saveUserInfo = async (uid, userData) => {
+    try {
+      const userRef = doc(db, "users", uid);
+      await setDoc(userRef, {
+        name: userData.name,
+        birthday: userData.birthday,
+        email: email,
+        createdAt: new Date().toISOString()
+      }, { merge: true });
+      console.log("User info saved successfully");
+    } catch (err) {
+      console.error("Error saving user info:", err);
+      throw err;
     }
-    if (!validateEmail(email)) {
-      alert('Invalid Email or Password');
-      return;
-    }
-    if (password.length < 6) {
-      alert('Invalid Email or Password');
-      return;
-    }
-    // Check for existing profile and password
-    const profileKey = `nanoBananaProfile_${email}`;
-    const savedProfile = localStorage.getItem(profileKey);
-    const userKey = `nanoBananaUser_${email}`;
-    const savedUser = localStorage.getItem(userKey);
-    if (!savedUser) {
-      alert('Invalid Email or Password');
-      return;
-    }
-    const userObj = JSON.parse(savedUser);
-    if (userObj.password !== password) {
-      alert('Invalid Email or Password');
-      return;
-    }
-    // Always set auth before completing
-    if (props.onAuth) props.onAuth({ email });
-    setTimeout(() => {
-      if (savedProfile) {
-        setHasProfile(true);
-        if (props.onComplete) props.onComplete('select'); // Go directly to dashboard
-      } else {
-        setHasProfile(false);
-        setStep('profileChoice'); // Show only Create New Profile
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    // Input validation for sign up
+    if (isSignUp) {
+      if (!profileData.name || !profileData.birthday) {
+        setLoading(false);
+        setError("Please fill in all profile fields.");
+        return;
       }
-    }, 0);
-  };
+      if (!email || !password || !confirmPassword) {
+        setLoading(false);
+        setError("Please fill in all authentication fields.");
+        return;
+      }
+      if (password.length < 6) {
+        setLoading(false);
+        setError("Password must be at least 6 characters.");
+        return;
+      }
+      if (password !== confirmPassword) {
+        setLoading(false);
+        setError("Passwords do not match.");
+        return;
+      }
+    } else {
+      // Input validation for sign in
+      if (!email || !password) {
+        setLoading(false);
+        setError("Please enter your email and password.");
+        return;
+      }
+    }
 
-  const handleSignUp = () => {
-    if (!email || !password || !confirmPassword || !name || !birthday) {
-      alert('Please fill in all fields.');
-      return;
+    try {
+      let user;
+      if (isSignUp) {
+        console.log("Attempting signup with profileData:", profileData);
+        
+        // Sign up the user (this only creates auth account)
+        user = await signUp(email, password);
+        console.log("Signup successful, user:", user);
+        
+        // Save user info to Firestore
+        if (user && user.uid) {
+          await saveUserInfo(user.uid, profileData);
+          console.log("User data saved to Firestore");
+        }
+        
+        if (user && onAuth) onAuth(user);
+        if (user && onComplete) onComplete("create");
+      } else {
+        user = await signIn(email, password);
+        if (user && onAuth) onAuth(user);
+        
+        // Check if profile exists for sign-in
+        const hasProfile = await checkUserProfile(user.uid);
+        if (hasProfile && onComplete) {
+          onComplete("select");
+        } else if (onComplete) {
+          onComplete("create");
+        }
+      }
+      setLoading(false);
+    } catch (err) {
+      setLoading(false);
+      console.error("Full error object:", err);
+      // Only show "Invalid Email or Password" for sign in errors
+      if (!isSignUp && err.code && err.code.startsWith("auth/")) {
+        setError("Invalid Email or Password");
+      } else {
+        setError(err.message || (isSignUp ? "Failed to create account. Please try again." : "Authentication failed"));
+      }
+      console.log("Firebase Auth Error:", err);
     }
-    if (!validateEmail(email)) {
-      alert('Please enter a valid email address.');
-      return;
-    }
-    if (password.length < 6) {
-      alert('Password must be at least 6 characters.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      alert('Passwords do not match!');
-      return;
-    }
-    // Check if user already exists
-    const userKey = `nanoBananaUser_${email}`;
-    if (localStorage.getItem(userKey)) {
-      alert('An account with this email already exists. Please sign in.');
-      return;
-    }
-    // Save user info (simulate registration)
-    localStorage.setItem(userKey, JSON.stringify({ email, password, name, birthday }));
-    // Always set auth before completing
-    if (props.onAuth) props.onAuth({ email });
-    setTimeout(() => {
-      setStep('profileChoice');
-    }, 0);
   };
-
-  const switchToSignUp = () => {
-    setStep('signup');
-    setEmail('');
-    setPassword('');
-  };
-
-  const switchToSignIn = () => {
-    setStep('signin');
-    setEmail('');
-    setPassword('');
-    setConfirmPassword('');
-    setName('');
-    setBirthday('');
-  };
-
 
   return (
     <>
@@ -446,9 +367,16 @@ export default function Onboarding(props) {
           border-color: #a855f7;
           box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
         }
-        .auth-button:hover {
+        .auth-input::placeholder {
+          color: rgba(255, 255, 255, 0.4);
+        }
+        .auth-button:hover:not(:disabled) {
           transform: translateY(-2px);
           box-shadow: 0 20px 25px -5px rgba(168, 85, 247, 0.4);
+        }
+        .auth-button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
         }
         .auth-logo:hover {
           transform: scale(1.05);
@@ -456,269 +384,180 @@ export default function Onboarding(props) {
         .auth-link:hover {
           color: #a855f7;
         }
-        .auth-action-card:hover {
-          transform: translateY(-2px);
-        }
-        .auth-action-card-secondary:hover {
-          background: rgba(255, 255, 255, 0.15);
-          border-color: #a855f7;
-        }
       `}</style>
       
       <div style={styles.container}>
+        {/* Back Button */}
+        <button
+          type="button"
+          onClick={onBack}
+          style={{
+            position: "absolute",
+            top: 32,
+            left: 32,
+            background: "linear-gradient(135deg, #ffe066 0%, #b6e880 100%)",
+            border: "none",
+            borderRadius: 8,
+            padding: "8px 18px",
+            color: "#23272f",
+            fontWeight: 600,
+            fontSize: 16,
+            cursor: "pointer",
+            boxShadow: "0 2px 8px #ffe06655",
+            zIndex: 100
+          }}
+        >
+          ← Home
+        </button>
+        
         <div style={styles.backgroundBlob1}></div>
         <div style={styles.backgroundBlob2}></div>
         <div style={styles.backgroundBlob3}></div>
-        
         <div style={styles.card}>
           <div style={styles.cardInner}>
             <div style={styles.gradientBar}></div>
             <div style={styles.content}>
-              {step === 'signin' && (
-                <div>
-                  <button type="button" style={{ ...styles.link, marginBottom: 16 }} onClick={onBack}>
-                    ← Back
-                  </button>
-                  <div style={styles.logoContainer}>
-                    <div style={styles.logo}>
-                      <div style={styles.logoIcon} className="auth-logo">
-                        <img src="/logosec.png" alt="Logo" style={{ width: 64, height: 64 }} />
-                      </div>
-                      <div style={styles.logoBadge}></div>
-                    </div>
+              <div style={styles.logoContainer}>
+                <div style={styles.logo}>
+                  <div style={styles.logoIcon} className="auth-logo">
+                    <img src="/logosec.png" alt="Logo" style={{ width: 64, height: 64 }} />
                   </div>
-
-                  <div style={styles.title}>
-                    <h1 style={styles.h1}>Quantum Bloom</h1>
-                  </div>
-                  <p style={styles.subtitle}>Sign in to your account</p>
-
-                  <div style={styles.formGroup}>
-                    <label htmlFor="signin-email" style={styles.label}>Email</label>
-                    <div style={styles.inputWrapper}>
-                      <div style={styles.inputIcon}>
-                        <MailIcon />
-                      </div>
-                      <input
-                        id="signin-email"
-                        type="email"
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                        required
-                        style={styles.input}
-                        className="auth-input"
-                      />
-                    </div>
-                  </div>
-
-                  <div style={styles.formGroup}>
-                    <label htmlFor="signin-password" style={styles.label}>Password</label>
-                    <div style={styles.inputWrapper}>
-                      <div style={styles.inputIcon}>
-                        <LockIcon />
-                      </div>
-                      <input
-                        id="signin-password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        required
-                        style={styles.input}
-                        className="auth-input"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleSignIn}
-                    style={styles.button}
-                    className="auth-button"
-                  >
-                    Sign In
-                  </button>
-
-                  <p style={styles.footerText}>
-                    Don't have an account?{' '}
-                    <button type="button" style={styles.link} className="auth-link" onClick={switchToSignUp}>
-                      Sign up
-                    </button>
-                  </p>
+                  <div style={styles.logoBadge}></div>
                 </div>
-              )}
+              </div>
 
-              {step === 'signup' && (
-                <div>
-                  <div style={styles.logoContainer}>
-                    <div style={styles.logo}>
-                      <div style={styles.logoIcon} className="auth-logo">
-                        <img src="/logosec.png" alt="Logo" style={{ width: 64, height: 64 }} />
+              <div style={styles.title}>
+                <h1 style={styles.h1}>Quantum Bloom</h1>
+              </div>
+              <p style={styles.subtitle}>
+                {isSignUp ? "Create your account" : "Sign in to your account"}
+              </p>
+
+              {error && <div style={styles.errorMessage}>{error}</div>}
+
+              <div>
+                {isSignUp && (
+                  <>
+                    <div style={styles.formGroup}>
+                      <label htmlFor="name" style={styles.label}>Your Name</label>
+                      <div style={styles.inputWrapper}>
+                        <div style={styles.inputIcon}>
+                          <UserIcon />
+                        </div>
+                        <input
+                          id="name"
+                          type="text"
+                          placeholder="Your full name"
+                          value={profileData.name}
+                          onChange={e => setProfileData({ ...profileData, name: e.target.value })}
+                          style={styles.input}
+                          className="auth-input"
+                        />
                       </div>
-                      <div style={styles.logoBadge}></div>
                     </div>
-                  </div>
 
-                  <div style={styles.title}>
-                    <h1 style={styles.h1}>Create Account</h1>
-                  </div>
-                  <p style={styles.subtitle}>Sign up to get started</p>
-
-                  <div style={styles.formGroup}>
-                    <label htmlFor="signup-name" style={styles.label}>Name</label>
-                    <div style={styles.inputWrapper}>
-                      <div style={styles.inputIcon}>
-                        <UserIcon />
+                    <div style={styles.formGroup}>
+                      <label htmlFor="birthday" style={styles.label}>Birthday</label>
+                      <div style={styles.inputWrapper}>
+                        <div style={styles.inputIcon}>
+                          <CalendarIcon />
+                        </div>
+                        <input
+                          id="birthday"
+                          type="date"
+                          value={profileData.birthday}
+                          onChange={e => setProfileData({ ...profileData, birthday: e.target.value })}
+                          style={styles.input}
+                          className="auth-input"
+                        />
                       </div>
-                      <input
-                        id="signup-name"
-                        type="text"
-                        placeholder="Your full name"
-                        value={name}
-                        onChange={e => setName(e.target.value)}
-                        required
-                        style={styles.input}
-                        className="auth-input"
-                      />
                     </div>
-                  </div>
+                  </>
+                )}
 
-                  <div style={styles.formGroup}>
-                    <label htmlFor="signup-birthday" style={styles.label}>Birthday</label>
-                    <div style={styles.inputWrapper}>
-                      <div style={styles.inputIcon}>
-                        <CalendarIcon />
-                      </div>
-                      <input
-                        id="signup-birthday"
-                        type="date"
-                        value={birthday}
-                        onChange={e => setBirthday(e.target.value)}
-                        required
-                        style={styles.input}
-                        className="auth-input"
-                      />
+                <div style={styles.formGroup}>
+                  <label htmlFor="email" style={styles.label}>Email</label>
+                  <div style={styles.inputWrapper}>
+                    <div style={styles.inputIcon}>
+                      <MailIcon />
                     </div>
+                    <input
+                      id="email"
+                      type="email"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      style={styles.input}
+                      className="auth-input"
+                    />
                   </div>
+                </div>
 
-                  <div style={styles.formGroup}>
-                    <label htmlFor="signup-email" style={styles.label}>Email</label>
-                    <div style={styles.inputWrapper}>
-                      <div style={styles.inputIcon}>
-                        <MailIcon />
-                      </div>
-                      <input
-                        id="signup-email"
-                        type="email"
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                        required
-                        style={styles.input}
-                        className="auth-input"
-                      />
+                <div style={styles.formGroup}>
+                  <label htmlFor="password" style={styles.label}>Password</label>
+                  <div style={styles.inputWrapper}>
+                    <div style={styles.inputIcon}>
+                      <LockIcon />
                     </div>
+                    <input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      style={styles.input}
+                      className="auth-input"
+                    />
                   </div>
+                </div>
 
+                {isSignUp && (
                   <div style={styles.formGroup}>
-                    <label htmlFor="signup-password" style={styles.label}>Password</label>
-                    <div style={styles.inputWrapper}>
-                      <div style={styles.inputIcon}>
-                        <LockIcon />
-                      </div>
-                      <input
-                        id="signup-password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        required
-                        style={styles.input}
-                        className="auth-input"
-                      />
-                    </div>
-                  </div>
-
-                  <div style={styles.formGroup}>
-                    <label htmlFor="signup-confirm-password" style={styles.label}>Confirm Password</label>
+                    <label htmlFor="confirmPassword" style={styles.label}>Confirm Password</label>
                     <div style={styles.inputWrapper}>
                       <div style={styles.inputIcon}>
                         <LockIcon />
                       </div>
                       <input
-                        id="signup-confirm-password"
+                        id="confirmPassword"
                         type="password"
                         placeholder="••••••••"
                         value={confirmPassword}
                         onChange={e => setConfirmPassword(e.target.value)}
-                        required
                         style={styles.input}
                         className="auth-input"
                       />
                     </div>
                   </div>
+                )}
 
-                  <button
-                    type="button"
-                    onClick={handleSignUp}
-                    style={styles.button}
-                    className="auth-button"
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  style={styles.button}
+                  className="auth-button"
+                >
+                  {loading ? "Processing..." : isSignUp ? "Sign Up" : "Sign In"}
+                </button>
+
+                <p style={styles.footerText}>
+                  {isSignUp ? "Already have an account?" : "Don't have an account?"}{' '}
+                  <button 
+                    type="button" 
+                    style={styles.link} 
+                    className="auth-link" 
+                    onClick={() => {
+                      setIsSignUp(!isSignUp);
+                      setError("");
+                      setConfirmPassword("");
+                      setProfileData({ name: "", birthday: "" });
+                    }}
                   >
-                    Sign Up
+                    {isSignUp ? "Sign in" : "Sign up"}
                   </button>
-
-                  <p style={styles.footerText}>
-                    Already have an account?{' '}
-                    <button type="button" style={styles.link} className="auth-link" onClick={switchToSignIn}>
-                      Sign in
-                    </button>
-                  </p>
-                </div>
-              )}
-
-              {step === 'profileChoice' && (
-                <div>
-                  <button type="button" style={{ ...styles.link, marginBottom: 16 }} onClick={onBack}>
-                    ← Back
-                  </button>
-                  <div style={styles.logoContainer}>
-                    <div style={styles.logo}>
-                      <div style={styles.welcomeIcon}>
-                        <UserBigIcon />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={styles.title}>
-                    <h1 style={styles.h1}>Welcome! 🎉</h1>
-                  </div>
-                  <p style={styles.subtitle}>Create a Brand Profile</p>
-
-                  <div style={{ marginTop: '32px' }}>
-                    <button
-                      onClick={() => onComplete('create')}
-                      style={styles.actionCard}
-                      className="auth-action-card"
-                    >
-                      <div style={styles.actionCardContent}>
-                        <div style={styles.actionCardLeft}>
-                          <div style={styles.actionCardIcon}>
-                            <PlusIcon />
-                          </div>
-                          <div style={styles.actionCardText}>
-                            <h3 style={styles.actionCardTitle}>Create Brand Profile</h3>
-                            <p style={styles.actionCardSubtitle}>Start fresh with a new brand</p>
-                          </div>
-                        </div>
-                        <svg style={{ width: '24px', height: '24px', color: 'white' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
-                    </button>
-                  </div>
-                </div>
-              )}
+                </p>
+              </div>
             </div>
           </div>
         </div>

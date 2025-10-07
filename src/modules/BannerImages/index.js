@@ -1,17 +1,75 @@
-import React, { useState } from "react";
-import { FaPaperPlane, FaImage, FaRegNewspaper, FaChartLine, FaSquare, FaRegPlayCircle, FaUserCircle, FaSignOutAlt, FaExpand, FaDownload } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { FaPaperPlane, FaImage, FaRegNewspaper, FaChartLine, FaSquare, FaRegPlayCircle, FaUserCircle, FaSignOutAlt, FaExpand, FaDownload, FaHistory, FaTimes } from "react-icons/fa";
 import { FaSpinner } from "react-icons/fa";
+import { collection, addDoc, query, orderBy, getDocs, deleteDoc, doc } from "firebase/firestore";
+import { db } from "../../config";
 
-export default function BannerImages({ onBackToDashboard, onNavigate, onSignOut, exampleImages = [], preOnboardingData = {} }) {
-  const handleProfileClick = () => window.location.href = '/';
-  const handleSignOut = () => window.location.href = '/';
-  
+export default function SocialMediaSquare({ onBackToDashboard, onNavigate, onSignOut, onProfileClick, user }) {
   const [prompt, setPrompt] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [lastPrompt, setLastPrompt] = useState("");
   const [fullscreen, setFullscreen] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // Load history when component mounts or when history panel opens
+  useEffect(() => {
+    if (showHistory && user?.uid) {
+      loadHistory();
+    }
+  }, [showHistory, user]);
+
+  const loadHistory = async () => {
+    if (!user?.uid) return;
+    
+    setLoadingHistory(true);
+    try {
+      const historyRef = collection(db, "users", user.uid, "imageHistory");
+      const q = query(historyRef, orderBy("createdAt", "desc"));
+      const snapshot = await getDocs(q);
+      
+      const historyData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      setHistory(historyData);
+    } catch (err) {
+      console.error("Error loading history:", err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const saveToHistory = async (promptText, imageUrl) => {
+    if (!user?.uid) return;
+    
+    try {
+      const historyRef = collection(db, "users", user.uid, "imageHistory");
+      await addDoc(historyRef, {
+        prompt: promptText,
+        imageUrl: imageUrl,
+        type: "social_media_square",
+        createdAt: new Date().toISOString()
+      });
+    } catch (err) {
+      console.error("Error saving to history:", err);
+    }
+  };
+
+  const deleteFromHistory = async (id) => {
+    if (!user?.uid) return;
+    
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "imageHistory", id));
+      setHistory(history.filter(item => item.id !== id));
+    } catch (err) {
+      console.error("Error deleting from history:", err);
+    }
+  };
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -21,12 +79,15 @@ export default function BannerImages({ onBackToDashboard, onNavigate, onSignOut,
     setLastPrompt(prompt);
     const currentPrompt = prompt;
     setPrompt("");
+    
     try {
       const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(currentPrompt)}?width=1024&height=1024&nologo=true&enhance=true`;
       const img = new Image();
       img.onload = () => {
         setImageUrl(url);
         setLoading(false);
+        // Save to history after successful generation
+        saveToHistory(currentPrompt, url);
       };
       img.onerror = () => {
         setError("Failed to generate image. Please try again.");
@@ -52,7 +113,7 @@ export default function BannerImages({ onBackToDashboard, onNavigate, onSignOut,
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = lastPrompt ? `${lastPrompt.slice(0, 50).replace(/[^a-z0-9]/gi, '_')}.png` : "banner_image.png";
+      link.download = lastPrompt ? `${lastPrompt.slice(0, 50).replace(/[^a-z0-9]/gi, '_')}.png` : "social_media_square.png";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -60,6 +121,17 @@ export default function BannerImages({ onBackToDashboard, onNavigate, onSignOut,
     } catch (err) {
       console.error('Download failed:', err);
     }
+  };
+
+  const loadFromHistory = (item) => {
+    setImageUrl(item.imageUrl);
+    setLastPrompt(item.prompt);
+    setShowHistory(false);
+  };
+
+  const formatDate = (isoString) => {
+    const date = new Date(isoString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -108,11 +180,11 @@ export default function BannerImages({ onBackToDashboard, onNavigate, onSignOut,
           <nav>
             <div style={{ color: '#fff', fontSize: 13, fontWeight: 400, letterSpacing: 1, margin: '0 0 8px 8px', opacity: 0.7 }}>Module</div>
             <button style={{ display: 'flex', alignItems: 'center', gap: 16, width: '100%', padding: '16px 32px', background: 'none', border: 'none', color: '#e9d5ff', fontSize: 18, cursor: 'pointer', borderLeft: '4px solid transparent', marginBottom: 8, transition: 'background 0.2s, color 0.2s, transform 0.2s' }} onClick={onBackToDashboard}><span style={{ fontWeight: 700 }}>&#8592;</span> <span>Dashboard</span></button>
-            <button disabled style={{ opacity: 0.5, cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: 16, width: '100%', padding: '16px 32px', background: 'none', border: 'none', color: '#e9d5ff', fontSize: 18 }}><FaImage size={22} /> <span>Image Ads</span></button>
-            <button style={{ display: 'flex', alignItems: 'center', gap: 16, width: '100%', padding: '16px 32px', background: 'none', border: 'none', color: '#ffe066', fontSize: 18, cursor: 'default', borderLeft: '4px solid #ffe066', marginBottom: 8, fontWeight: 700, boxShadow: '0 2px 8px #ffe06655', transition: 'background 0.2s, color 0.2s, transform 0.2s' }}><FaRegNewspaper size={22} /> <span>Banner Images</span></button>
-            <button style={{ display: 'flex', alignItems: 'center', gap: 16, width: '100%', padding: '16px 32px', background: 'none', border: 'none', color: '#e9d5ff', fontSize: 18, cursor: 'pointer', borderLeft: '4px solid transparent', marginBottom: 8, transition: 'background 0.2s, color 0.2s, transform 0.2s' }} onClick={() => onNavigate('HelpToSell')}><FaChartLine size={22} /> <span>Help-to-Sell</span></button>
-            <button style={{ display: 'flex', alignItems: 'center', gap: 16, width: '100%', padding: '16px 32px', background: 'none', border: 'none', color: '#e9d5ff', fontSize: 18, cursor: 'pointer', borderLeft: '4px solid transparent', marginBottom: 8, transition: 'background 0.2s, color 0.2s, transform 0.2s' }} onClick={() => onNavigate('SocialMediaSquare')}><FaSquare size={22} /> <span>Social Media Square</span></button>
-            <button disabled style={{ opacity: 0.5, cursor: 'not-allowed', display: 'flex', alignItems: 'center', gap: 16, width: '100%', padding: '16px 32px', background: 'none', border: 'none', color: '#e9d5ff', fontSize: 18 }}><FaRegPlayCircle size={22} /> <span>Media Story</span></button>
+<button disabled style={{ display: 'flex', alignItems: 'center', gap: 16, width: '100%', padding: '16px 32px', background: 'none', border: 'none', color: '#888', fontSize: 18, cursor: 'not-allowed', borderLeft: '4px solid transparent', marginBottom: 8, opacity: 0.5, transition: 'background 0.2s, color 0.2s, transform 0.2s' }}><FaImage size={22} /> <span>Image Ads</span></button>
+            <button style={{ display: 'flex', alignItems: 'center', gap: 16, width: '100%', padding: '16px 32px', background: 'none', border: 'none', color: '#ffe066', fontSize: 18, cursor: 'default', borderLeft: '4px solid #ffe066', marginBottom: 8, fontWeight: 700, boxShadow: '0 2px 8px #ffe06655' }}><FaSquare size={22} /> <span>Banner Images</span></button>
+            <button style={{ display: 'flex', alignItems: 'center', gap: 16, width: '100%', padding: '16px 32px', background: 'none', border: 'none', color: '#e9d5ff', fontSize: 18, cursor: 'pointer', borderLeft: '4px solid transparent', marginBottom: 8 }} onClick={() => onNavigate('HelpToSell')}><FaChartLine size={22} /> <span>Help-to-Sell</span></button>
+            <button style={{ display: 'flex', alignItems: 'center', gap: 16, width: '100%', padding: '16px 32px', background: 'none', border: 'none', color: '#e9d5ff', fontSize: 18, cursor: 'pointer', borderLeft: '4px solid transparent', marginBottom: 8 }} onClick={() => onNavigate('SocialMediaSquare')}><FaChartLine size={22} /> <span>Social Media Square</span></button>
+            <button disabled style={{ display: 'flex', alignItems: 'center', gap: 16, width: '100%', padding: '16px 32px', background: 'none', border: 'none', color: '#888', fontSize: 18, cursor: 'not-allowed', borderLeft: '4px solid transparent', marginBottom: 8, opacity: 0.5, transition: 'background 0.2s, color 0.2s, transform 0.2s' }}><FaRegPlayCircle size={22} /> <span>Media Story</span></button>
           </nav>
           <hr style={{ border: 'none', borderTop: '1.5px solid #ffe06633', margin: '24px 0 12px 16px', width: '80%', alignSelf: 'flex-start' }} />
         </div>
@@ -120,34 +192,33 @@ export default function BannerImages({ onBackToDashboard, onNavigate, onSignOut,
           <div style={{ color: '#fff', fontSize: 13, fontWeight: 400, letterSpacing: 1, margin: '0 0 8px 32px', opacity: 0.7 }}>Settings</div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '0 16px' }}>
             <button
-              onClick={handleProfileClick}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, borderRadius: 8, transition: 'background 0.2s, color 0.2s, transform 0.2s' }}
+              onClick={() => onProfileClick?.()}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                borderRadius: 8,
+                transition: 'background 0.2s, color 0.2s, transform 0.2s',
+              }}
               title="Profile"
-              onMouseOver={e => {
-                e.currentTarget.style.background = 'rgba(102,204,255,0.18)';
-                e.currentTarget.style.color = '#1e90ff';
-                e.currentTarget.style.transform = 'scale(1.12)';
-              }}
-              onMouseOut={e => {
-                e.currentTarget.style.background = 'none';
-                e.currentTarget.style.color = '';
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
             >
               <FaUserCircle size={32} color="#ffe066" />
             </button>
             <button
-              onClick={handleSignOut}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ffe066', fontSize: 18, display: 'flex', alignItems: 'center', gap: 8, padding: '4px 8px', borderRadius: 8, transition: 'background 0.2s, color 0.2s, transform 0.2s' }}
-              onMouseOver={e => {
-                e.currentTarget.style.background = 'rgba(255,102,102,0.18)';
-                e.currentTarget.style.color = '#ff3b3b';
-                e.currentTarget.style.transform = 'scale(1.12)';
-              }}
-              onMouseOut={e => {
-                e.currentTarget.style.background = 'none';
-                e.currentTarget.style.color = '#ffe066';
-                e.currentTarget.style.transform = 'scale(1)';
+              onClick={onSignOut}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#ffe066',
+                fontSize: 18,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '4px 8px',
+                borderRadius: 8,
+                transition: 'background 0.2s, color 0.2s, transform 0.2s',
               }}
             >
               <FaSignOutAlt size={22} /> Sign Out
@@ -158,10 +229,45 @@ export default function BannerImages({ onBackToDashboard, onNavigate, onSignOut,
 
       {/* Main Content */}
       <div style={{ flex: 1 }}>
+        {/* History Button - Fixed Position */}
+        <button
+          onClick={() => setShowHistory(!showHistory)}
+          style={{
+            position: 'fixed',
+            top: 24,
+            right: 24,
+            padding: '12px 20px',
+            background: 'rgba(255, 224, 102, 0.2)',
+            backdropFilter: 'blur(10px)',
+            border: '2px solid #ffe066',
+            borderRadius: 12,
+            color: '#ffe066',
+            fontSize: 16,
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            boxShadow: '0 4px 16px rgba(255, 224, 102, 0.3)',
+            transition: 'all 0.2s',
+            zIndex: 100
+          }}
+          onMouseOver={e => {
+            e.currentTarget.style.background = 'rgba(255, 224, 102, 0.3)';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+          }}
+          onMouseOut={e => {
+            e.currentTarget.style.background = 'rgba(255, 224, 102, 0.2)';
+            e.currentTarget.style.transform = 'translateY(0)';
+          }}
+        >
+          <FaHistory /> History
+        </button>
+
         {/* Centered Result Image */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "calc(100vh - 120px)", paddingBottom: 120 }}>
           <div style={{ maxWidth: 600, width: "100%", background: "rgba(255, 255, 255, 0.1)", backdropFilter: "blur(12px)", borderRadius: 18, boxShadow: "0 4px 24px rgba(255, 224, 102, 0.3)", padding: 40, textAlign: "center", position: "relative", margin: "0 auto", border: "1px solid rgba(255, 224, 102, 0.2)" }}>
-            <h2 style={{ color: "#ffe066", fontWeight: 700, marginBottom: 24, fontSize: 28, textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)" }}>Banner Image Generator</h2>
+            <h2 style={{ color: "#ffe066", fontWeight: 700, marginBottom: 24, fontSize: 28, textShadow: "0 2px 8px rgba(0, 0, 0, 0.3)" }}>Banner Images Generator</h2>
             {error && <div style={{ color: "#ff3b3b", marginBottom: 16, padding: 12, background: "rgba(255, 59, 59, 0.2)", borderRadius: 8, backdropFilter: "blur(8px)" }}>{error}</div>}
             
             {loading && (
@@ -179,7 +285,7 @@ export default function BannerImages({ onBackToDashboard, onNavigate, onSignOut,
                 <div style={{ margin: "32px 0", padding: 20, background: "rgba(182, 232, 128, 0.05)", borderRadius: 12, border: "2px dashed #b6e880", position: "relative" }}>
                   <img 
                     src={imageUrl} 
-                    alt="Generated banner" 
+                    alt="Generated square" 
                     style={{ 
                       width: "100%", 
                       maxWidth: 512,
@@ -210,8 +316,6 @@ export default function BannerImages({ onBackToDashboard, onNavigate, onSignOut,
                         gap: 8
                       }}
                       onClick={() => setFullscreen(true)}
-                      onMouseOver={e => e.currentTarget.style.transform = "translateY(-2px)"}
-                      onMouseOut={e => e.currentTarget.style.transform = "translateY(0)"}
                     >
                       <FaExpand /> Fullscreen
                     </button>
@@ -232,8 +336,6 @@ export default function BannerImages({ onBackToDashboard, onNavigate, onSignOut,
                         alignItems: "center",
                         gap: 8
                       }}
-                      onMouseOver={e => e.currentTarget.style.transform = "translateY(-2px)"}
-                      onMouseOut={e => e.currentTarget.style.transform = "translateY(0)"}
                     >
                       <FaDownload /> Download
                     </button>
@@ -251,7 +353,7 @@ export default function BannerImages({ onBackToDashboard, onNavigate, onSignOut,
             {!imageUrl && !loading && (
               <div style={{ margin: "48px 0", color: "#e9d5ff", fontSize: 16 }}>
                 <div style={{ fontSize: 48, marginBottom: 16 }}>🖼️</div>
-                <div>Enter a description below to generate your banner image</div>
+                <div>Enter a description below to generate your square image</div>
               </div>
             )}
           </div>
@@ -265,7 +367,7 @@ export default function BannerImages({ onBackToDashboard, onNavigate, onSignOut,
               value={prompt}
               onChange={e => setPrompt(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Describe your banner image..."
+              placeholder="Describe your square image..."
               style={{ 
                 flex: 1,
                 padding: 18, 
@@ -306,6 +408,131 @@ export default function BannerImages({ onBackToDashboard, onNavigate, onSignOut,
           </div>
         </div>
 
+        {/* History Sidebar */}
+        {showHistory && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            right: 0,
+            width: 400,
+            height: '100vh',
+            background: 'rgba(24, 26, 32, 0.98)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '-4px 0 24px rgba(0, 0, 0, 0.3)',
+            zIndex: 1000,
+            display: 'flex',
+            flexDirection: 'column',
+            animation: 'slideInRight 0.3s ease-out'
+          }}>
+            <div style={{
+              padding: '24px',
+              borderBottom: '2px solid rgba(255, 224, 102, 0.2)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h3 style={{ color: '#ffe066', margin: 0, fontSize: 24, fontWeight: 700 }}>
+                <FaHistory style={{ marginRight: 8 }} /> History
+              </h3>
+              <button
+                onClick={() => setShowHistory(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#e9d5ff',
+                  fontSize: 24,
+                  cursor: 'pointer',
+                  padding: 8,
+                  borderRadius: 8,
+                  transition: 'all 0.2s'
+                }}
+              >
+                <FaTimes />
+              </button>
+            </div>
+            
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '16px'
+            }}>
+              {loadingHistory ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#e9d5ff' }}>
+                  <FaSpinner className="spin" style={{ fontSize: 32, marginBottom: 16 }} />
+                  <div>Loading history...</div>
+                </div>
+              ) : history.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: '#e9d5ff' }}>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
+                  <div>No history yet</div>
+                  <div style={{ fontSize: 14, marginTop: 8, opacity: 0.7 }}>Generated images will appear here</div>
+                </div>
+              ) : (
+                history.map((item) => (
+                  <div
+                    key={item.id}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      borderRadius: 12,
+                      padding: 12,
+                      marginBottom: 12,
+                      border: '1px solid rgba(255, 224, 102, 0.2)',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      position: 'relative'
+                    }}
+                    onMouseOver={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+                    onMouseOut={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+                  >
+                    <img
+                      src={item.imageUrl}
+                      alt="History item"
+                      style={{
+                        width: '100%',
+                        borderRadius: 8,
+                        marginBottom: 8,
+                        aspectRatio: '1/1',
+                        objectFit: 'cover'
+                      }}
+                      onClick={() => loadFromHistory(item)}
+                    />
+                    <div style={{ color: '#e9d5ff', fontSize: 13, marginBottom: 4 }}>
+                      {item.prompt}
+                    </div>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <div style={{ color: '#b6e880', fontSize: 11 }}>
+                        {formatDate(item.createdAt)}
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteFromHistory(item.id);
+                        }}
+                        style={{
+                          background: 'rgba(255, 59, 59, 0.2)',
+                          border: '1px solid rgba(255, 59, 59, 0.4)',
+                          color: '#ff3b3b',
+                          padding: '4px 8px',
+                          borderRadius: 6,
+                          fontSize: 11,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Fullscreen Modal */}
         {fullscreen && (
           <div 
@@ -338,7 +565,7 @@ export default function BannerImages({ onBackToDashboard, onNavigate, onSignOut,
             >
               <img
                 src={imageUrl}
-                alt="Fullscreen banner"
+                alt="Fullscreen"
                 style={{ 
                   maxWidth: "90vw", 
                   maxHeight: "90vh", 
@@ -370,17 +597,6 @@ export default function BannerImages({ onBackToDashboard, onNavigate, onSignOut,
                   alignItems: "center",
                   justifyContent: "center"
                 }}
-                onMouseOver={e => {
-                  e.currentTarget.style.background = "rgba(255, 59, 59, 0.3)";
-                  e.currentTarget.style.borderColor = "#ff3b3b";
-                  e.currentTarget.style.transform = "scale(1.1)";
-                }}
-                onMouseOut={e => {
-                  e.currentTarget.style.background = "rgba(255, 224, 102, 0.2)";
-                  e.currentTarget.style.borderColor = "#ffe066";
-                  e.currentTarget.style.transform = "scale(1)";
-                }}
-                title="Close"
               >
                 ✕
               </button>
@@ -404,6 +620,10 @@ export default function BannerImages({ onBackToDashboard, onNavigate, onSignOut,
             0% { transform: scale(0.8); opacity: 0; }
             60% { transform: scale(1.05); opacity: 1; }
             100% { transform: scale(1); opacity: 1; }
+          }
+          @keyframes slideInRight {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
           }
         `}</style>
       </div>

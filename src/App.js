@@ -6,7 +6,6 @@ import Onboarding from './auth/Onboarding';
 import BrandProfileManager from './profiles/BrandProfileManager';
 import CreateProfile from './profiles/CreateProfile';
 import ProfilePage from './profiles/ProfilePage';
-import NicheSelector from './niches/NicheSelector';
 import Dashboard from './components/Dashboard';
 import TemplateBrowser from './templates/TemplateBrowser';
 import AIImageGenerator from './ai/AIImageGenerator';
@@ -19,7 +18,6 @@ import SocialMediaSquare from './modules/SocialMediaSquare';
 import MediaStory from './modules/MediaStory';
 
 function App() {
-  // Restore step and selectedModule from localStorage if available
   const [onboardingAction, setOnboardingAction] = useState(null);
   const [step, setStep] = useState(() => localStorage.getItem('nanoBananaStep') || 'home');
   const [onboardingData, setOnboardingData] = useState(null);
@@ -91,18 +89,22 @@ function App() {
   }, [auth, onboardingAction]);
   
   if (step === 'createProfile') {
-    return <CreateProfile onComplete={p => {
-      setProfile(p);
-      const email = auth?.email;
-      if (!email) {
-        alert('No signed-in email found. Please sign in again.');
-        setStep('home');
-        return;
-      }
-      const profileKey = `nanoBananaProfile_${email}`;
-      localStorage.setItem(profileKey, JSON.stringify(p));
-      setStep('niche');
-    }} onBack={() => setStep('onboarding')} />;
+    return <CreateProfile 
+      user={auth}
+      onComplete={p => {
+        setProfile(p);
+        const email = auth?.email;
+        if (!email) {
+          alert('No signed-in email found. Please sign in again.');
+          setStep('home');
+          return;
+        }
+        const profileKey = `nanoBananaProfile_${email}`;
+        localStorage.setItem(profileKey, JSON.stringify(p));
+        setStep('dashboard');
+      }} 
+      onBack={() => setStep('onboarding')} 
+    />;
   }
 
   if (step === 'home') {
@@ -134,33 +136,34 @@ function App() {
   }
 
   if (step === 'profile') {
-    return <BrandProfileManager onComplete={p => {
-      setProfile(p);
-      const email = auth?.email;
-      if (!email) {
-        alert('No signed-in email found. Please sign in again.');
-        setStep('home');
-        return;
-      }
-      const profileKey = `nanoBananaProfile_${email}`;
-      localStorage.setItem(profileKey, JSON.stringify(p));
-      setStep('niche');
-    }} />;
-  }
-
-  if (step === 'niche') {
-    return <NicheSelector user={auth} onSelect={n => {
-      setNiche(n);
-      setStep('dashboard');
-    }} />;
+    return <BrandProfileManager
+      user={auth}
+      onComplete={p => {
+        setProfile(p);
+        const email = auth?.email;
+        if (!email) {
+          alert('No signed-in email found. Please sign in again.');
+          setStep('home');
+          return;
+        }
+        const profileKey = `nanoBananaProfile_${email}`;
+        localStorage.setItem(profileKey, JSON.stringify(p));
+        setStep('dashboard');
+      }}
+      onBack={() => setStep('profilePage')}
+    />;
   }
   
   if (step === 'profilePage') {
     return <ProfilePage
       user={auth}
+      profile={profile}
       onEdit={() => setStep('profile')}
       onChangePassword={() => alert('Change password functionality coming soon.')}
       onBack={() => setStep('dashboard')}
+      onSave={updatedProfile => {
+        // Save the updated profile here
+      }}
     />;
   }
 
@@ -175,6 +178,7 @@ function App() {
         userWithName = { ...auth, name: userObj.name };
       }
     }
+    
     // If a module is selected, render its page in main content
     const email = auth?.email;
     const profileKey = email ? `nanoBananaProfile_${email}` : null;
@@ -183,19 +187,73 @@ function App() {
     const savedPre = preKey ? JSON.parse(localStorage.getItem(preKey) || '{}') : {};
     
     if (selectedModule === 'BannerImages') {
-      return <BannerImages onBackToDashboard={() => setSelectedModule(null)} onNavigate={setSelectedModule} onSignOut={handleSignOut} exampleImages={savedProfile.exampleImages || []} preOnboardingData={savedPre} />;
+      return (
+        <BannerImages
+          user={auth}
+          onBackToDashboard={() => setSelectedModule(null)}
+          onNavigate={setSelectedModule}
+          onSignOut={handleSignOut}
+          onProfileClick={() => setStep('profilePage')}
+          exampleImages={savedProfile.exampleImages || []}
+          preOnboardingData={savedPre}
+        />
+      );
     }
+
     if (selectedModule === 'ImageAds') {
-      return <ImageAds onBackToDashboard={() => setSelectedModule(null)} onNavigate={setSelectedModule} onSignOut={handleSignOut} exampleImages={savedProfile.exampleImages || []} preOnboardingData={savedPre} />;
+      return (
+        <ImageAds
+          user={auth}
+          onBackToDashboard={() => setSelectedModule(null)}
+          onNavigate={setSelectedModule}
+          onSignOut={handleSignOut}
+          onProfileClick={() => setStep('profilePage')}
+          exampleImages={savedProfile.exampleImages || []}
+          preOnboardingData={savedPre}
+        />
+      );
     }
+
     if (selectedModule === 'HelpToSell') {
-      return <HelpToSell onBackToDashboard={() => setSelectedModule(null)} onNavigate={setSelectedModule} onSignOut={handleSignOut} exampleImages={savedProfile.exampleImages || []} preOnboardingData={savedPre} />;
+      return (
+        <HelpToSell
+          user={auth}
+          onBackToDashboard={() => setSelectedModule(null)}
+          onNavigate={setSelectedModule}
+          onSignOut={handleSignOut}
+          onProfileClick={() => setStep('profilePage')}
+          exampleImages={savedProfile.exampleImages || []}
+          preOnboardingData={savedPre}
+        />
+      );
     }
+
     if (selectedModule === 'SocialMediaSquare') {
-      return <SocialMediaSquare onBackToDashboard={() => setSelectedModule(null)} onNavigate={setSelectedModule} onSignOut={handleSignOut} exampleImages={savedProfile.exampleImages || []} preOnboardingData={savedPre} />;
+      return (
+        <SocialMediaSquare
+          user={auth}
+          onBackToDashboard={() => setSelectedModule(null)}
+          onNavigate={setSelectedModule}
+          onSignOut={handleSignOut}
+          onProfileClick={() => setStep('profilePage')}
+          exampleImages={savedProfile.exampleImages || []}
+          preOnboardingData={savedPre}
+        />
+      );
     }
+
     if (selectedModule === 'MediaStory') {
-      return <MediaStory onBackToDashboard={() => setSelectedModule(null)} onNavigate={setSelectedModule} onSignOut={handleSignOut} exampleImages={savedProfile.exampleImages || []} preOnboardingData={savedPre} />;
+      return (
+        <MediaStory
+          user={auth}
+          onBackToDashboard={() => setSelectedModule(null)}
+          onNavigate={setSelectedModule}
+          onSignOut={handleSignOut}
+          onProfileClick={() => setStep('profilePage')}
+          exampleImages={savedProfile.exampleImages || []}
+          preOnboardingData={savedPre}
+        />
+      );
     }
     
     // Default: show dashboard only
